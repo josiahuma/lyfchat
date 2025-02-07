@@ -47,10 +47,11 @@ function SymptomHistory() {
       <ul>
         {history.map((entry) => (
           <li key={entry._id}>
+            <p><em>{new Date(entry.createdAt).toLocaleString()}</em></p>
             <p><strong>Symptoms:</strong> {entry.symptoms.join(', ')}</p>
             <p><strong>Diagnosis:</strong> {entry.diagnosis}</p>
-            <p><em>{new Date(entry.createdAt).toLocaleString()}</em></p>
             <Tips diagnosis={entry.diagnosis} />
+            <hr />
           </li>
         ))}
       </ul>
