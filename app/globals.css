@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-white text-black font-sans;
+}
+
+a {
+  @apply text-blue-500 hover:underline;
+}
+
+button {
+  @apply cursor-pointer;
+}
