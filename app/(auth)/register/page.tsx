@@ -1,29 +1,57 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
+  // 🔹 Email/password sign up
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('Creating account...');
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
 
-    try {
-      // 🔹 Replace this with Supabase signup logic
-      setTimeout(() => {
-        setMessage('Account created successfully!');
-        router.push('/interests');
-      }, 1000);
-    } catch (error) {
-      setMessage('Registration failed. Please try again.');
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/interests`, // after email confirm
+      },
+    })
+
+    setLoading(false)
+
+    if (error) {
+      setMessage(error.message)
+      return
     }
-  };
+
+    // If email confirmations are enabled, Supabase will send a verify email.
+    if (data?.user && !data.user.confirmed_at) {
+      setMessage('Check your email to confirm your account.')
+    } else {
+      setMessage('Account created successfully!')
+      router.push('/interests')
+    }
+  }
+
+  // 🔹 Google sign up (OAuth)
+  const handleGoogleSignup = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/interests`,
+      },
+    })
+    if (error) setMessage(error.message)
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-white to-blue-50 px-4">
@@ -53,14 +81,15 @@ export default function RegisterPage() {
 
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700 transition"
           >
-            Register
+            {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 
         <button
-          onClick={() => alert('Google sign-up coming soon')}
+          onClick={handleGoogleSignup}
           className="w-full mt-3 border border-blue-600 text-blue-600 py-2 rounded-full hover:bg-blue-50 transition"
         >
           Sign up with Google
@@ -68,7 +97,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-600 mt-4">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-blue-600 hover:underline">
             Login
           </Link>
         </p>
@@ -76,7 +105,9 @@ export default function RegisterPage() {
         {message && (
           <p
             className={`text-center mt-4 text-sm ${
-              message.includes('success') ? 'text-green-600' : 'text-red-600'
+              message.toLowerCase().includes('success') || message.toLowerCase().includes('confirm')
+                ? 'text-green-600'
+                : 'text-red-600'
             }`}
           >
             {message}
@@ -84,5 +115,5 @@ export default function RegisterPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -1,10 +1,18 @@
-import { Suspense } from 'react';
-import CommunityPageContent from './CommunityPageContent';
+// app/community/page.tsx (server component)
+import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/lib/supabaseServer'
+import CommunityPageContent from './CommunityPageContent'
 
-export default function CommunityPage() {
-  return (
-    <Suspense fallback={<div className="text-center py-10 text-gray-500">Loading community feed...</div>}>
-      <CommunityPageContent />
-    </Suspense>
-  );
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+export default async function CommunityPage() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  return <CommunityPageContent />
 }
